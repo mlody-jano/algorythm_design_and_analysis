@@ -47,3 +47,24 @@ void Solution::catchOptions() const { // Implement option handler
             cout << "Invalid choice. Please provide a valid option." << endl;
     }
 }
+
+void Solution::setTable(int size1, int size2, int size3, int size4, int size5) { // Implement table initialization with given sizes
+    tables[0] = new int[size1];
+    tables[1] = new int[size2];
+    tables[2] = new int[size3];
+    tables[3] = new int[size4];
+    tables[4] = new int[size5];
+}
+
+void validDataGuard(int argc, char *argv[]) { // Implement data validation for command line arguments
+    if (argc != 6) {
+        cout << "Usage: " << argv[0] << " <size1> <size2> <size3> <size4> <size5>" << endl;
+        exit(1);
+    }
+    for (int i = 1; i <= 5; ++i) {
+        if (atoi(argv[i]) <= 0) {
+            cout << "All sizes must be positive integers." << endl;
+            exit(1);
+        }
+    }
+}

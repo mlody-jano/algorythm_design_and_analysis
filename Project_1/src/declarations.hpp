@@ -18,7 +18,12 @@ public:
 
     int getSize() const { return size;}
     void setSize(int newSize) { size = newSize; }
+
+    int *getTable() const;
+    void setTable(int, int, int, int, int);
 private:
     int size;
     int *tables[5];
 };
+
+void validDataGuard(int argc, char *argv[]);
