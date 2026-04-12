@@ -1,2 +1,15 @@
-/.vscode/
-/project_data.xlsx
+# Compiled binary files
+project1
+
+# Python virtual environment
+.venv/
+
+# C++ build files
+build/
+*.o
+*.out
+*.exe
+
+# Results and plots
+*.png
+*.csv
