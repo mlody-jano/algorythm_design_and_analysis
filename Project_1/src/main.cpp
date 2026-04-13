@@ -210,23 +210,23 @@ int main(int argc, char* argv[])
     */
 
     if(algo == "quick") {
-        auto start = high_resolution_clock::now();
+        auto start  = high_resolution_clock::now();
         table.quickSort(0, table.returnSize() - 1);
-        auto end = high_resolution_clock::now();
-        sortTime = duration_cast<nanoseconds>(end - start).count();
+        auto end    = high_resolution_clock::now();
+        sortTime    = duration_cast<nanoseconds>(end - start).count();
     }
     else if(algo == "merge") {
-        auto start = high_resolution_clock::now();
+        auto start  = high_resolution_clock::now();
         table.mergeSort(0, table.returnSize() - 1);
-        auto end = high_resolution_clock::now();
-        sortTime = duration_cast<nanoseconds>(end - start).count();
+        auto end    = high_resolution_clock::now();
+        sortTime    = duration_cast<nanoseconds>(end - start).count();
     }
     else if(algo == "intro") {
         int depthLimit = 2 * log(table.returnSize());
-        auto start = high_resolution_clock::now();
+        auto start  = high_resolution_clock::now();
         table.introSort(0, table.returnSize() - 1, depthLimit);
-        auto end = high_resolution_clock::now();
-        sortTime = duration_cast<nanoseconds>(end - start).count();
+        auto end    = high_resolution_clock::now();
+        sortTime    = duration_cast<nanoseconds>(end - start).count();
     }
 
     // ── Calculating average and median values ─────────────────────────────────
@@ -238,6 +238,12 @@ int main(int argc, char* argv[])
     */
     averageValue = table.findAverage();
     medianValue  = table.findMedian();
+
+    /*
+        Utility function to display contents of table, used for testing and verification purposes.
+    */
+
+    // table.display();
 
     // ── Print results  (format: loadTime, sortTime, averageValue, medianValue) ──────────
 

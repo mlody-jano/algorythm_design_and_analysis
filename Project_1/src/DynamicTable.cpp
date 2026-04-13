@@ -186,10 +186,10 @@ void DynamicTable::quickSort(int low, int high) {
     if (low >= high) return;
 
     // Three-way partition — handles duplicates in O(n) per level
-    int pivot = table[low + (high - low) / 2].getScore();
-    int lt = low;    // table[low..lt-1]  < pivot
-    int gt = high;   // table[gt+1..high] > pivot
-    int i  = low;    // table[lt..i-1]   == pivot
+    int pivot   = table[low + (high - low) / 2].getScore();
+    int lt      = low;    // table[low..lt-1]  < pivot
+    int gt      = high;   // table[gt+1..high] > pivot
+    int i       = low;    // table[lt..i-1]   == pivot
 
     while (i <= gt) {
         int score = table[i].getScore();
@@ -197,8 +197,6 @@ void DynamicTable::quickSort(int low, int high) {
         else if (score > pivot) swap(table[i],    table[gt--]);
         else                    i++;
     }
-    // Now: table[low..lt-1] < pivot, table[lt..gt] == pivot, table[gt+1..high] > pivot
-    // The entire [lt..gt] range is already in its final position — skip it entirely
     quickSort(low,   lt - 1);
     quickSort(gt + 1, high);
 }
@@ -241,8 +239,10 @@ void DynamicTable::introSort(int low, int high, int depthLimit) {
             return;
         }
 
-        int pivot = table[low + (high - low) / 2].getScore();           // Chooses the middle element using the median of first middle and last element
-        int lt = low, gt = high, i = low;
+        int pivot   = table[low + (high - low) / 2].getScore();           // Chooses the middle element using the median of first middle and last element
+        int lt      = low;
+        int gt      = high;
+        int i       = low;
         while (i <= gt) {
             int score = table[i].getScore();
             if      (score < pivot) swap(table[lt++], table[i++]);
@@ -314,13 +314,13 @@ void DynamicTable::heapSort(int low, int high) {
 }
 /*
     Heapify function — maintains the heap property for a subtree rooted at index root, which is an index in the relative range [low, high].
-     The function assumes that the binary trees rooted at left and right child of root are already heaps
+    The function assumes that the binary trees rooted at left and right child of root are already heaps
 */
 void DynamicTable::heapify(int low, int high, int root) {
     int largest = root;
-    int left  = 2 * root + 1;
-    int right = 2 * root + 2;
-    int n = high - low + 1;   // ✅ work in relative indices
+    int left    = 2 * root + 1;
+    int right   = 2 * root + 2;
+    int n       = high - low + 1;
 
     if (left < n && table[low + left].getScore() > table[low + largest].getScore())
         largest = left;
@@ -336,22 +336,25 @@ void DynamicTable::heapify(int low, int high, int root) {
 
 /*
     Function to find the median value of the scores in the table. Assumes the table is sorted by score.
+    Returns the median score of dataset.
 */
 float DynamicTable::findMedian() const {
-    return table[size / 2].getScore(); // Assuming the table is sorted and we want the median score of the rankings
+    return (size % 2 == 0) ? (table[size / 2 - 1].getScore() + table[size / 2].getScore()) / 2.0f
+                            : table[size / 2].getScore();
 }
 
 /**
     Function to find the average value of the scores in the table.
+    Returns the average score of dataset.
 */
 float DynamicTable::findAverage() const {
     if (size == 0) {
         cerr << "Table is empty. Cannot calculate average." << endl;
-        return 0; // Return 0 to indicate an error
+        return 0;
     }
     int sum = 0;
     for (int i = 0; i < size; i++) {
-        sum += table[i].getScore(); // Assuming we want to average the scores of the rankings
+        sum += table[i].getScore();
     }
-    return static_cast<float>(sum) / size; // Return the average score
+    return static_cast<float>(sum) / size;
 }
