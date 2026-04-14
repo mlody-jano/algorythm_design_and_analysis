@@ -152,11 +152,7 @@ void DynamicTable::checkCapacity() {
 */
 void DynamicTable::display() const {
     cout << "Table contents: " << endl;
-    for (int i = 0; i < size; i++)
-    {
-        cout << i << " ";
-    }
-    cout << endl;
+    cout << " ";
 
     for (int i = 0; i < size; i++)
     {
@@ -185,7 +181,6 @@ Ranking DynamicTable::returnElementAtPosition(int position) const {
 void DynamicTable::quickSort(int low, int high) {
     if (low >= high) return;
 
-    // Three-way partition — handles duplicates in O(n) per level
     int pivot   = table[low + (high - low) / 2].getScore();
     int lt      = low;    // table[low..lt-1]  < pivot
     int gt      = high;   // table[gt+1..high] > pivot
@@ -197,6 +192,15 @@ void DynamicTable::quickSort(int low, int high) {
         else if (score > pivot) swap(table[i],    table[gt--]);
         else                    i++;
     }
+    cout << "After partitioning with pivot " << pivot << ": " << endl;
+    cout << " ";
+    for (int i = 0; i < this->size; i++)
+    {
+        table[i].display();
+        cout << " ";
+    }
+    cout << endl;
+    
     quickSort(low,   lt - 1);
     quickSort(gt + 1, high);
 }
@@ -214,14 +218,32 @@ void DynamicTable::mergeSort(int left, int right) {
 
 /*
     Private mergeSort function that performs the actual merge sort, encapsulated to be used with the buffer.
-    Such implementation ensures that we cannot accidentally call mergeSort without the buffer, which coulc lead to memory leaks of poor performance.
+    Such implementation ensures that we cannot accidentally call mergeSort without the buffer, which could lead to memory leaks of poor performance.
 */
 void DynamicTable::mergeSortInternal(int left, int right, Ranking* buffer) {
     if (left >= right) return;
     int mid = left + (right - left) / 2;
-    mergeSortInternal(left, mid, buffer);
-    mergeSortInternal(mid + 1, right, buffer);
+    mergeSortInternal(left, mid, buffer);                                       // Recursive call for left half of the array
+    mergeSortInternal(mid + 1, right, buffer);                                  // Recursive call for right half of the array
     merge(left, mid, right, buffer);
+
+    cout << "Buffer: " << endl;
+    cout << " ";
+    for (int i = 0; i < size; i++)
+    {
+        buffer[i].display();
+        cout << " ";
+    }
+    cout << endl;
+
+    cout << "After merging [" << left << ", " << mid << "] and [" << mid + 1 << ", " << right << "]: " << endl;
+    cout << " ";
+        for (int i = 0; i < this->size; i++)
+        {
+            table[i].display();
+            cout << " ";
+        }
+    cout << endl;
 }
 /*
     IntroSort function — uses quicksort for the main sorting, but switches to heapsort or insertion sort.
@@ -230,7 +252,7 @@ void DynamicTable::mergeSortInternal(int left, int right, Ranking* buffer) {
 */
 void DynamicTable::introSort(int low, int high, int depthLimit) {
     while (low < high) {
-        if (high - low + 1 <= 16) {
+        if (high - low + 1 <= 16) {                                     // If the partition size is small, switch to insertion sort
             insertionSort(low, high);
             return;
         }
@@ -239,7 +261,11 @@ void DynamicTable::introSort(int low, int high, int depthLimit) {
             return;
         }
 
-        int pivot   = table[low + (high - low) / 2].getScore();           // Chooses the middle element using the median of first middle and last element
+        /*
+            QuickSort as the main sorting algorithm
+        */
+
+        int pivot   = table[low + (high - low) / 2].getScore();         // Chooses the middle element
         int lt      = low;
         int gt      = high;
         int i       = low;
@@ -249,6 +275,14 @@ void DynamicTable::introSort(int low, int high, int depthLimit) {
             else if (score > pivot) swap(table[i],    table[gt--]);
             else                    i++;
         }
+        cout << "After partitioning with pivot " << pivot << ": " << endl;
+        cout << " ";
+        for (int i = 0; i < this->size; i++)
+        {
+            table[i].display();
+            cout << " ";
+        }
+        cout << endl;
 
         if (lt - low < high - gt) {
             introSort(low,    lt - 1, depthLimit - 1);
@@ -262,6 +296,7 @@ void DynamicTable::introSort(int low, int high, int depthLimit) {
 
 /*
     InsertionSort function — sorts the elements in the range [low, high] using insertion sort.
+    Selects the key and compares it to the elements.
 */
 void DynamicTable::insertionSort(int low, int high) {
     for (int i = low + 1; i <= high; i++) {
@@ -272,6 +307,14 @@ void DynamicTable::insertionSort(int low, int high) {
             j--;
         }
         table[j + 1] = key;
+
+        cout << "After inserting element at index " << i << ": " << endl;
+        cout << " ";
+        for (int i = 0; i < this->size; i++) {
+            table[i].display();
+            cout << " ";
+        }
+        cout << endl;
     }
 }
 
@@ -287,10 +330,10 @@ void DynamicTable::merge(int left, int mid, int right, Ranking* buffer) {
 
     int i = 0, j = 0, k = left;
     while (i < n1 && j < n2) {
-        if (buffer[i].getScore() <= buffer[n1 + j].getScore())
+        if (buffer[i].getScore() <= buffer[n1 + j].getScore())                  // If element in left subarray is smaller then copy to the main array
             table[k++] = buffer[i++];
         else
-            table[k++] = buffer[n1 + j++];
+            table[k++] = buffer[n1 + j++];                                      // If element in right subarray is smaller then copy to the main array
     }
     while (i < n1) table[k++] = buffer[i++];
     while (j < n2) table[k++] = buffer[n1 + j++];
@@ -300,21 +343,35 @@ void DynamicTable::merge(int left, int mid, int right, Ranking* buffer) {
     It first builds a max heap from the input array, then repeatedly extracts the maximum element and rebuilds the heap.
 */
 void DynamicTable::heapSort(int low, int high) {
-    // Implementation of heap sort algorithm
     int n = high - low + 1;
 
     for (int i = n / 2 - 1; i >= 0; i--)
         heapify(low, high, i);                                              // Build heap
 
+    cout << "After building heap: " << endl;
+    cout << " ";
+    for (int i = 0; i < this->size; i++) {
+        table[i].display();
+        cout << " ";
+    }
+    cout << endl;
+
     // One by one extract elements from heap
     for (int i = n - 1; i > 0; i--) {
         swap(table[low], table[low + i]);                                   // Move current root to end
-        heapify(low, low + i - 1, 0);                                       // Call heapify on the reduced heap
+        heapify(low, low + i - 1, 0);
+
+        cout << "After heapifying: " << endl;
+        cout << " ";
+            for (int i = 0; i < this->size; i++) {
+            table[i].display();
+            cout << " ";
+        }
+        cout << endl;
     }
 }
 /*
     Heapify function — maintains the heap property for a subtree rooted at index root, which is an index in the relative range [low, high].
-    The function assumes that the binary trees rooted at left and right child of root are already heaps
 */
 void DynamicTable::heapify(int low, int high, int root) {
     int largest = root;

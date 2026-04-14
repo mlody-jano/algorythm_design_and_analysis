@@ -115,7 +115,7 @@ int main(int argc, char* argv[])
         Validating the sorting algorithm argument to ensure it is one of the accepted values ("quick", "merge", or "intro").
         If an invalid algorithm is specified, an error message is printed and the program exits with a non-zero code.
     */
-    if (argv[1] != string("quick") && argv[1] != string("merge") && argv[1] != string("intro")) {
+    if (argv[1] != string("quick") && argv[1] != string("merge") && argv[1] != string("intro") && argv[1] != string("heap")) {
         cerr << "Invalid sorting algorithm specified. Use 'quick', 'merge', or 'intro'." << endl;
         return 1;
     }
@@ -201,6 +201,12 @@ int main(int argc, char* argv[])
     loadTime = duration_cast<nanoseconds>(loadEnd - loadStart).count(); // Time taken to load data into structure is saved for output
     infile.close();
 
+    /*
+        Displaying the contents of the table after loading the data.
+    */
+
+    table.display();
+
     // ── Performing sorting operation and measuring time taken ─────────────────
 
     /*
@@ -228,6 +234,14 @@ int main(int argc, char* argv[])
         auto end    = high_resolution_clock::now();
         sortTime    = duration_cast<nanoseconds>(end - start).count();
     }
+    else if (algo == "heap")
+    {
+        auto start  = high_resolution_clock::now();
+        table.heapSort(0, table.returnSize() - 1);
+        auto end    = high_resolution_clock::now();
+        sortTime    = duration_cast<nanoseconds>(end - start).count();
+    }
+    
 
     // ── Calculating average and median values ─────────────────────────────────
 
@@ -243,7 +257,7 @@ int main(int argc, char* argv[])
         Utility function to display contents of table, used for testing and verification purposes.
     */
 
-    // table.display();
+    table.display();
 
     // ── Print results  (format: loadTime, sortTime, averageValue, medianValue) ──────────
 

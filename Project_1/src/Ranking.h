@@ -1,6 +1,7 @@
 #ifndef RANKING_H
 #define RANKING_H
 #include <string>
+#include <cstring>
 #include <fstream>
 #include <iostream>
 #include <chrono>

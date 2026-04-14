@@ -39,6 +39,7 @@ public:
     void quickSort(int low, int high);
     void mergeSort(int left, int right);
     void introSort(int low, int high, int depthLimit);
+    void heapSort(int low, int high);
 
 private:
     int capacity;
@@ -49,7 +50,7 @@ private:
     void merge(int left, int mid, int right, Ranking*);
     void mergeSortInternal(int left, int right, Ranking*);
     void insertionSort(int low, int high);
-    void heapSort(int low, int high);
+    // void heapSort(int low, int high);
     void heapify(int low, int high, int root);
 };
 
