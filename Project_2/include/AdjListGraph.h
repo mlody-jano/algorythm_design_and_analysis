@@ -3,6 +3,14 @@
 #include <unordered_map>
 #include <iostream>
 
+/**
+ * class AdjListGraph
+ * inherits from @class Graph and implements a graph data structure using an adjacency list representation
+ * @tparam V type of name of the vertex, @tparam E type of weight of the edge
+ * the adjacency list itself is implemented by the vector of edge pointers in the @class Vertex
+ * uses unordered maps to store mapping ID's to pointers of vertex and edge objects as values and ID's as keys to allow for O(1) access to the vertex and edge objects.
+ * uses two counters for keeping track of the next available ID for vertex and edge objects
+ */
 template <typename V, typename E>
 class AdjListGraph : public Graph<V,E> {
 public:
@@ -11,6 +19,12 @@ public:
 
     // vertex functions
 
+    /**
+     * public method for adding a new vertex to the graph
+     * @param newVertex name of the new vertex to be added
+     * @return pointer to the newly added vertex object
+     * adds the vertex to the graph, and adds the vertex ID and pointer as pair to the map to allow for O(1) access
+     */
     VertexPtr addVertex(V newVertex) override {
         VertexID id = nextVID++;
 
@@ -21,6 +35,12 @@ public:
 
     void eraseVertex(VertexID) override;
 
+    /**
+     * public method for returning a pointer to the vertex object with the given ID
+     * @param vID ID of vertex to be returned
+     * @return pointer to the vertex object with the given ID if available, otherwise @throw VertexNotFoundException
+     * uses the vertex map to find the vertex, instead of iterating through the list of vertices
+     */
     VertexPtr getVertex(VertexID vID) const override {
         auto it = vertexMap.find(vID);
         if(it == vertexMap.end()) {throw VertexNotFoundException(vID);}
@@ -29,6 +49,11 @@ public:
 
     bool hasVertex(VertexID vID) const override { return vertexMap.contains(vID);}
 
+    /**
+     * public method for returning a vector of pointers to all vertices in the graph
+     * @return vector of pointers to all vertices
+     * iterates through the vertex map, ignores the keys and adds the vertex pointers to the result
+     */
     std::vector<VertexPtr> vertices() const override {
         std::vector<VertexPtr> result;
         for (const auto& [_, vertex] : vertexMap) { result.push_back(vertex);}
@@ -39,6 +64,14 @@ public:
 
     // edge functions
 
+    /**
+     * public method for adding a new edge to the graph
+     * @param from source vertex ID, @param to destination vertex ID, @param weight weight of the edge
+     * @return pointer to the newly added edge object
+     * checks if edge already exists; if so, @throws DuplicateEdgeException. Otherwise, proceeds
+     * gets the vertex object from map using keys passed as parameters, instead of iterating through the list of vertices
+     * creates a new edge and adds it to the edge map
+     */
     EdgePtr addEdge(VertexID from, VertexID to, E weight) override {
         if(this->hasEdge(from,to)) {throw DuplicateEdgeException(from,to);}
 
@@ -62,6 +95,12 @@ public:
 
     bool hasEdge(VertexID fromID, VertexID toID) const override { return this->findEdge(fromID, toID).has_value();}
 
+    /**
+     * public method for finding an edge in the graph
+     * @param fromID source vertex ID, @param toID destination vertex ID
+     * @return pointer to the edge object if available, otherwise nullopt
+     * iterates through incident edges of the source vertex and checks if there is a matching edge with the destination vertex
+     */
     std::optional<EdgePtr> findEdge(VertexID fromID, VertexID toID) const override {
         if (!this->hasVertex(fromID)) return std::nullopt;
         for (const auto& edge : this->getVertex(fromID)->incidentEdges()) {
@@ -71,6 +110,11 @@ public:
         return std::nullopt;
     }
 
+    /**
+     * public method for returning a vector of pointers to all edges in the graph
+     * @return vector of pointers to all edges
+     * iterates through the edge map, ignores the keys and adds the edge pointers to the result
+     */
     std::vector<EdgePtr> edges() const override {
         std::vector<EdgePtr> result;
         for (const auto& [_, edge] : edgeMap) result.push_back(edge);
@@ -81,7 +125,12 @@ public:
 
     // utilities
 
-    
+    /**
+     * public method for returning a vector of pointers to vertices adjacent to a given vertex
+     * @param vID ID of vertex to find neighbors of
+     * @return vector of pointers to neighboring vertices
+     * iterates through the incident edges of the vertex and uses @fn opposite() to find the neighboring vertex
+     */
     std::vector<VertexPtr> neighbors(VertexID vID) const override {
         std::vector<VertexPtr> result;
         for (const auto& edge : this->getVertex(vID)->incidentEdges())
@@ -94,11 +143,19 @@ public:
     size_t degree(VertexID) const override;
 
 private:
-    std::unordered_map<VertexID, VertexPtr> vertexMap;
-    std::unordered_map<EdgeID,   EdgePtr>   edgeMap;
+    std::unordered_map<VertexID, VertexPtr> vertexMap;          // mapping VertexID to Vertex object pointers
+    std::unordered_map<EdgeID,   EdgePtr>   edgeMap;            // mapping EdgeID to Edge object pointers
     VertexID nextVID = 0;
     EdgeID   nextEID = 0;
 
+    /**
+     * private method for erasing and edge by its ID
+     * @param eID ID of edge to be erased
+     * checks if edge with the given ID exists; if not, returns. Otherwise, proceeds
+     * gets the edge object from map using key passed as parameter, instead of iterating through the list of edges
+     * removes the edge from the incident edge lists of its source and destination vertices
+     * erases the edge from the edge map
+     */
     void eraseEdgeByID(EdgeID eID) {
         auto it = edgeMap.find(eID);
 
@@ -112,6 +169,14 @@ private:
     }
 };
 
+/**
+ * public method for erasing a vertex from the graph
+ * @tparam V type of name of the vertex, @tparam E type of weight of the edge
+ * @param old ID of vertex to be erased
+ * gets the vertex object from map using key passed as parameter
+ * iterates through the vector of edges to be removed and calls @fn eraseEdgeByID() to remove the edge from the graph
+ * erases the vertex from the vertex map
+ */
 template <typename V, typename E>
 void AdjListGraph<V,E>::eraseVertex(VertexID old) {
     auto vertex = this->getVertex(old);
@@ -123,6 +188,13 @@ void AdjListGraph<V,E>::eraseVertex(VertexID old) {
     vertexMap.erase(old);
 }
 
+/**
+ * public method for erasing an edge from the graph
+ * @tparam V type of name of the vertex, @tparam E type of weight
+ * @param from source vertex ID, @param to destination vertex ID
+ * @throws EdgeNotFoundException if there is no edge between the given vertices
+ * gets the edge object from map using keys passed as parameters
+ */
 template <typename V, typename E>
 void AdjListGraph<V,E>::eraseEdge(VertexID from, VertexID to) {
     auto edge = this->findEdge(from, to);
@@ -130,6 +202,11 @@ void AdjListGraph<V,E>::eraseEdge(VertexID from, VertexID to) {
     eraseEdgeByID((*edge)->getID());
 }
 
+/**
+ * public method for printing the graph
+ * @tparam V type of name of the vertex, @tparam E type of weight
+ * iterates through the vertex map, ignoring the keys and prints the name of the vertex and the names of its neighboring vertices
+ */
 template <typename V, typename E>
 void AdjListGraph<V,E>::print() const {
     for (const auto& [_, vertex] : vertexMap) {
@@ -140,5 +217,12 @@ void AdjListGraph<V,E>::print() const {
     }
 }
 
+/**
+ * public method for returning the degree of a vertex
+ * @tparam V type of name of the vertex, @tparam E type of weight
+ * @param vID ID of the vertex to return the degree of
+ * @return degree of vertex with the given ID
+ * gets the vertex object from map using key passed as parameter and calls the @fn degree() of vertex object
+ */
 template <typename V, typename E>
 size_t AdjListGraph<V,E>::degree(VertexID vID) const { return this->getVertex(vID)->degree();}

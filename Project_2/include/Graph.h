@@ -2,6 +2,11 @@
 #include "Edge.h"
 #include "Vertex.h"
 
+/**
+ * class Graph
+ * implements an abstract graph data structure that is later overridden by implementations
+ * @tparam V type of name of the vertex, @tparam E type of weight of the edge
+ */
 template <typename V, typename E>
 class Graph {
 public:
