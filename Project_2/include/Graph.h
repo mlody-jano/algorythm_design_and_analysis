@@ -1,6 +1,7 @@
 #pragma once
 #include "Edge.h"
 #include "Vertex.h"
+#include <functional>
 
 /**
  * class Graph
@@ -11,8 +12,9 @@ template <typename V, typename E>
 class Graph {
 public:
 
-    using VertexPtr = std::shared_ptr<Vertex<V,E>>;
-    using EdgePtr   = std::shared_ptr<Edge<E>>;
+    using VertexPtr     = std::shared_ptr<Vertex<V,E>>;
+    using EdgePtr       = std::shared_ptr<Edge<E>>;
+    using EdgeVisitor   = std::function<void(VertexID, VertexID, E)>;
     
     Graph()                                                                   = default;
     virtual ~Graph()                                                          = default;
@@ -29,10 +31,15 @@ public:
     virtual bool                    hasEdge(VertexID, VertexID)         const = 0;
     virtual std::optional<EdgePtr>  findEdge(VertexID, VertexID)        const = 0;
     virtual std::vector<EdgePtr>    edges()                             const = 0;
+
+    virtual void                    forEachEdge(const EdgeVisitor&)     const = 0;
+
     virtual size_t                  edgeCount()                         const = 0;
 
     virtual std::vector<VertexPtr>  neighbors(VertexID)                 const = 0;
     virtual void                    print()                             const = 0;
 
     virtual size_t                  degree(VertexID)                    const = 0;
+
+
 };

@@ -13,7 +13,7 @@ inline std::string graphTypeName(GraphType t) {
 }
 
 // ─────────────────────────────────────────────────────────────
-//  GraphGenerator — tworzy losowe ważone grafy nieskierowane
+//  GraphGenerator — tworzy losowe ważone grafy skierowane
 // ─────────────────────────────────────────────────────────────
 class GraphGenerator {
 public:
@@ -37,26 +37,38 @@ public:
     std::unique_ptr<Graph<std::string, int>> generate() const {
         std::unique_ptr<Graph<std::string, int>> graph;
 
-        if (type_ == GraphType::AdjacencyList)
+        if (type_ == GraphType::AdjacencyList) {
             graph = std::make_unique<AdjListGraph<std::string, int>>();
-        else
+        } else {
             graph = std::make_unique<AdjMtxGraph<std::string, int>>();
+        }
 
         // Dodaj wierzchołki
         std::vector<VertexID> ids;
         ids.reserve(vertexCount_);
+
         for (size_t i = 0; i < vertexCount_; ++i)
             ids.push_back(graph->addVertex("V" + std::to_string(i))->getID());
 
-        // Losuj krawędzie — każda para (i,j), i < j rozpatrywana raz
+        // Generator losowy
         std::mt19937 rng(seed_);
         std::uniform_real_distribution<double> prob(0.0, 1.0);
-        std::uniform_int_distribution<int>     weight(minWeight_, maxWeight_);
+        std::uniform_int_distribution<int> weight(minWeight_, maxWeight_);
 
-        for (size_t i = 0; i < vertexCount_; ++i)
-            for (size_t j = i + 1; j < vertexCount_; ++j)
-                if (prob(rng) < density_)
+        // Generowanie krawędzi skierowanych
+        for (size_t i = 0; i < vertexCount_; ++i) {
+            for (size_t j = 0; j < vertexCount_; ++j) {
+
+                // Pomijamy pętle i -> i
+                if (i == j)
+                    continue;
+
+                // Losujemy niezależnie krawędź i -> j
+                if (prob(rng) < density_) {
                     graph->addEdge(ids[i], ids[j], weight(rng));
+                }
+            }
+        }
 
         return graph;
     }
@@ -69,8 +81,6 @@ public:
     int       maxWeight()   const { return maxWeight_; }
     unsigned  seed()        const { return seed_; }
 
-    // Ustawiając nowe ziarno za każdym razem dostajemy inny graf
-    // przy tych samych pozostałych parametrach
     void reseed(unsigned newSeed) { seed_ = newSeed; }
 
 private:
@@ -84,8 +94,10 @@ private:
     void validate() const {
         if (vertexCount_ == 0)
             throw std::invalid_argument("Liczba wierzchołków musi być > 0");
+
         if (density_ < 0.0 || density_ > 1.0)
             throw std::invalid_argument("Gęstość musi być w przedziale [0.0, 1.0]");
+
         if (minWeight_ > maxWeight_)
             throw std::invalid_argument("minWeight musi być <= maxWeight");
     }

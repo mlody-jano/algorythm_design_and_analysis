@@ -39,20 +39,23 @@ public:
     const EdgeList& incidentEdges() const {return edges;}
     bool isAdjacentTo(const Vertex<V,E>& other) const;
 
-    // EdgeList outEdges() const {
-    //     EdgeList result;
-    //     for (const auto& e : edges) {
-    //         if(e->getFrom() == id) {result.push_back(e);}
-    //     }
-    //     return result;
-    // }
-    // EdgeList inEdges() const {
-    //     EdgeList result;
-    //     for (const auto& e : edges) {
-    //         if(e->getTo() == id) {result.push_back(e);}
-    //     }
-    //     return result;
-    // }
+    EdgeList outEdges() const {
+    EdgeList result;
+    for (const auto& e : edges) {
+        // krawędź skierowana: tylko wychodząca
+        // krawędź nieskierowana: każda incydentna jest "wychodząca"
+        if (!e->isDirected() || e->getFrom() == id)
+            result.push_back(e);
+    }
+    return result;
+}
+    EdgeList inEdges() const {
+        EdgeList result;
+        for (const auto& e : edges)
+            if (e->isDirected() && e->getTo() == id)
+                result.push_back(e);
+        return result;
+    }
 
     // getters and setters for vertex attributes
 
@@ -67,8 +70,8 @@ public:
      * @return degree of vertex
      */
     size_t degree() const {return edges.size();}
-    // size_t outDegree() const {return outEdges().size();}
-    // size_t inDegree() const {return inEdges().size();}  
+    size_t outDegree() const {return outEdges().size();}
+    size_t inDegree() const {return inEdges().size();}  
 
 private:
     VertexID    id;

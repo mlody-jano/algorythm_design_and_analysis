@@ -35,6 +35,8 @@ public:
 
     bool operator==(const Edge<E>& e) {return id == e.getID();}
 
+    virtual bool isDirected() const { return false; }
+
 };
 
 /**
@@ -87,3 +89,10 @@ bool Edge<E>::isAdjacentTo(const Edge<E>& next) const {return next.isIncidentOn(
  */
 template <typename E>
 bool Edge<E>::isIncidentOn(VertexID neigh) const {return from == neigh || to == neigh;}
+
+template<typename T>
+class DirectedEdge : public Edge<T> {
+public:
+    using Edge<T>::Edge;
+    bool isDirected() const override { return true; }
+};

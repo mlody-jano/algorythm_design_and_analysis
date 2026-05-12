@@ -48,8 +48,7 @@ struct BFResult {
 // ─────────────────────────────────────────────────────────────
 template <typename V>
 BFResult bellmanFord(const Graph<V, int>& g, VertexID source) {
-    if (!g.hasVertex(source))
-        throw VertexNotFoundException(source);
+    if (!g.hasVertex(source)) {throw VertexNotFoundException(source);}
 
     BFResult result;
     const int      INF     = BFResult::INF;
@@ -62,7 +61,7 @@ BFResult bellmanFord(const Graph<V, int>& g, VertexID source) {
     }
     result.dist[source] = 0;
 
-    const size_t numV = g.vertexCount();
+    const size_t numV       = g.vertexCount();
     auto         allEdges = g.edges();
 
     // Główna pętla: V-1 relaksacji

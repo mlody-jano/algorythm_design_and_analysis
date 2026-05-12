@@ -19,6 +19,8 @@ public:
 
     // vertex functions
 
+    explicit AdjListGraph(bool directed = false) : directed(directed) {}
+
     /**
      * public method for adding a new vertex to the graph
      * @param newVertex name of the new vertex to be added
@@ -72,23 +74,26 @@ public:
      * gets the vertex object from map using keys passed as parameters, instead of iterating through the list of vertices
      * creates a new edge and adds it to the edge map
      */
-    EdgePtr addEdge(VertexID from, VertexID to, E weight) override {
-        if(this->hasEdge(from,to)) {throw DuplicateEdgeException(from,to);}
+    EdgePtr addEdge(VertexID fromID, VertexID toID, E weight) override {
+        if (hasEdge(fromID, toID)) throw DuplicateEdgeException(fromID, toID);
 
-        auto source = this->getVertex(from);
-        auto dest = this->getVertex(to);
+        auto from = getVertex(fromID);
+        auto to   = getVertex(toID);
 
-        EdgeID eID = nextEID++;
-        EdgePtr newEdge;
+        EdgeID eid = nextEID++;
+        EdgePtr edge;
+        if (directed)
+            edge = std::make_shared<DirectedEdge<E>>(eid, fromID, toID, weight);
+        else
+            edge = std::make_shared<Edge<E>>(eid, fromID, toID, weight);
 
-        newEdge = std::make_shared<Edge<E>>(eID, from, to, weight);
+        edgeMap[eid] = edge;
 
-        edgeMap[eID] = newEdge;
+        // Oba wierzchołki wiedzą o krawędzi
+        from->addEdge(edge);
+        to->addEdge(edge);
 
-        source->addEdge(newEdge);
-        dest->addEdge(newEdge);
-
-        return newEdge; 
+        return edge;
     }
 
     void eraseEdge(VertexID, VertexID) override;
@@ -101,11 +106,13 @@ public:
      * @return pointer to the edge object if available, otherwise nullopt
      * iterates through incident edges of the source vertex and checks if there is a matching edge with the destination vertex
      */
-    std::optional<EdgePtr> findEdge(VertexID fromID, VertexID toID) const override {
-        if (!this->hasVertex(fromID)) return std::nullopt;
-        for (const auto& edge : this->getVertex(fromID)->incidentEdges()) {
-            if (edge->getFrom() == fromID && edge->getTo() == toID) {return edge;}
-            if (edge->getFrom() == toID && edge->getTo() == fromID) {return edge;}
+    std::optional<EdgePtr> findEdge(VertexID fromID,
+                                    VertexID toID) const override {
+        if (!hasVertex(fromID)) return std::nullopt;
+        for (const auto& e : getVertex(fromID)->incidentEdges()) {
+            if (e->getFrom() == fromID && e->getTo() == toID) return e;
+            if (!directed && e->getFrom() == toID && e->getTo() == fromID)
+                return e;
         }
         return std::nullopt;
     }
@@ -121,8 +128,15 @@ public:
         return result;
     }
 
-    size_t edgeCount() const override { return edgeMap.size(); }
+    size_t edgeCount() const override {
+        size_t count = 0;
+        for (const auto& [_, edge] : edgeMap)
+            count += 1;
+        return directed ? count : count / 2;
+    }
 
+    void forEachEdge(const typename Graph<V,E>::EdgeVisitor&) const;
+    
     // utilities
 
     /**
@@ -145,6 +159,7 @@ public:
 private:
     std::unordered_map<VertexID, VertexPtr> vertexMap;          // mapping VertexID to Vertex object pointers
     std::unordered_map<EdgeID,   EdgePtr>   edgeMap;            // mapping EdgeID to Edge object pointers
+    bool directed;                                             // flag for directed or undirected graph
     VertexID nextVID = 0;
     EdgeID   nextEID = 0;
 
@@ -168,6 +183,8 @@ private:
         edgeMap.erase(eID);
     }
 };
+
+
 
 /**
  * public method for erasing a vertex from the graph
@@ -226,3 +243,8 @@ void AdjListGraph<V,E>::print() const {
  */
 template <typename V, typename E>
 size_t AdjListGraph<V,E>::degree(VertexID vID) const { return this->getVertex(vID)->degree();}
+
+template <typename V, typename E>
+void AdjListGraph<V,E>::forEachEdge(const typename Graph<V,E>::EdgeVisitor& fn) const {
+    for (const auto& [_, edge] : edgeMap) { fn(edge->getFrom(), edge->getTo(), edge->getWeight());}
+}
