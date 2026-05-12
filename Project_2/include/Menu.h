@@ -11,9 +11,11 @@
 #include <algorithm>
 #include <array>
 
-// ─────────────────────────────────────────────────────────────
-//  Wiersz tabeli podsumowującej benchmark
-// ─────────────────────────────────────────────────────────────
+/**
+ * struct BenchRow
+ * structure for storing the results of a single row in the benchmark table
+ * used in @class Menu for storing the results of the benchmark tests and printing them in a formatted table and exporting them to a CSV file
+ */
 struct BenchRow {
     size_t vertices;
     double density;
@@ -24,19 +26,21 @@ struct BenchRow {
     double avgUnreachable;
 };
 
-// ─────────────────────────────────────────────────────────────
-//  Menu — punkt wejścia dla użytkownika
-//
-//  Tryb 1 — Interaktywny : demonstracja operacji na grafach
-//  Tryb 2 — Benchmarkowy : testy Bellmana-Forda dla zadanych
-//            liczb wierzchołków × 4 stałe gęstości
-// ─────────────────────────────────────────────────────────────
+/**
+ * class Menu
+ * class for running the entire program, implementing two run modes
+ * - interactive mode for demonstrating the operations on the graph
+ * - benchmark mode for running tests on graph implementations
+ */
 class Menu {
 public:
     static constexpr std::array<double, 4> DENSITIES = {0.25, 0.50, 0.75, 1.00};
 
     void run() {
 
+        /**
+         * formatting the console output to UTF-8 to allow for printing box characters of the tables
+         */
         #ifdef _WIN32
         system("chcp 65001 > nul");
         #endif
@@ -56,53 +60,54 @@ public:
 
 private:
 
-    // ════════════════════════════════════════════
-    //  TRYB INTERAKTYWNY
-    // ════════════════════════════════════════════
+    /**
+     * private method for running interactive mode of the program
+     * generates a random graph based on user input parameters
+     * demonstrates the structure of the graph, lists the edges with weights, shows the degrees of the vertices, runs Bellman-Ford algorithm and shows the results, performs some modifications on the graph and shows the modified graph
+     */
     void interactiveMode_() const {
         printHeader_("TRYB INTERAKTYWNY");
         std::cout << "Demonstracja operacji na obu implementacjach grafu.\n";
 
-        // Parametry grafu
+        // graph parameters
         GraphType gtype = chooseGraphType_();
         int    V    = readInt_<int>   ("Liczba wierzchołków [2–15]: ", 2,    15);
         double dens = readDouble_     ("Gęstość grafu [0.0–1.0]:    ", 0.0,  1.0);
         int    minW = readInt_<int>   ("Minimalna waga krawędzi:    ", 1,    100);
         int    maxW = readInt_<int>   ("Maksymalna waga krawędzi:   ", minW, 100);
 
-        GraphGenerator gen(static_cast<size_t>(V), dens, gtype, minW, maxW);
+        GraphGenerator gen(static_cast<size_t>(V), dens, gtype, minW, maxW, true);
         auto graph = gen.generate();
 
-        // Struktura grafu
+        // printing the generated graph
         printSection_("Wygenerowany graf");
         std::cout << "  Wierzchołki: " << graph->vertexCount()
                   << "   Krawędzie: "  << graph->edgeCount() << "\n\n";
         graph->print();
 
-        // Lista krawędzi z wagami
+        // printing the edges with weights
         printSection_("Krawędzie z wagami");
         for (const auto& e : graph->edges())
             std::cout << "  V" << e->getFrom()
                       << " <-> V" << e->getTo()
                       << "  (waga: " << e->getWeight() << ")\n";
 
-        // Stopnie wierzchołków
+        // printing the degrees of the vertices
         printSection_("Stopnie wierzchołków");
         for (const auto& v : graph->vertices())
             std::cout << "  " << v->getName()
                       << " : stopień = "
                       << graph->neighbors(v->getID()).size() << "\n";
 
-        // Bellman-Ford
+        // printing the results of Bellman-Ford algorithm
         printSection_("Bellman-Ford — najkrótsze ścieżki");
         VertexID src = graph->vertices().front()->getID();
         std::cout << "  Źródło: V" << src << "\n\n";
 
         auto bf = bellmanFord(*graph, src);
 
-        if (bf.hasNegativeCycle) {
-            std::cout << "  UWAGA: wykryto ujemny cykl!\n";
-        } else {
+        if (bf.hasNegativeCycle) { std::cout << "  UWAGA: wykryto ujemny cykl!\n";} 
+        else {
             std::cout << std::left
                       << std::setw(12) << "  Cel"
                       << std::setw(12) << "Odległość"
@@ -111,24 +116,21 @@ private:
 
             for (const auto& v : graph->vertices()) {
                 VertexID vid = v->getID();
-                if (vid == src) continue;
+                if (vid == src) { continue;}
                 std::cout << "  " << std::setw(10) << v->getName();
 
-                if (!bf.reachable(vid)) {
-                    std::cout << std::setw(12) << "INF" << "(nieosiągalny)\n";
-                    continue;
-                }
+                if (!bf.reachable(vid)) { std::cout << std::setw(12) << "INF" << "(nieosiągalny)\n"; continue;}
                 std::cout << std::setw(12) << bf.dist.at(vid);
                 size_t i = 0;
-                for (const auto& p : bf.pathTo(vid))
-                    std::cout << (i++ ? " -> " : "") << "V" << p;
+                for (const auto& p : bf.pathTo(vid)) { std::cout << (i++ ? " -> " : "") << "V" << p;}
                 std::cout << "\n";
             }
         }
 
-        // Operacje modyfikujące
+        // modifing operations on the graph
         printSection_("Operacje modyfikujące");
 
+        // deleting an edge 
         if (graph->edgeCount() > 0) {
             auto e = graph->edges().front();
             std::cout << "  Usuwanie krawędzi V" << e->getFrom()
@@ -137,6 +139,7 @@ private:
             std::cout << "  Krawędzi po usunięciu: " << graph->edgeCount() << "\n";
         }
 
+        // deleting a vertex
         if (graph->vertexCount() > 2) {
             VertexID last = graph->vertices().back()->getID();
             std::cout << "  Usuwanie wierzchołka V" << last << "...\n";
@@ -145,15 +148,17 @@ private:
                       << graph->vertexCount() << "\n";
         }
 
+        // printing the modified graph
         printSection_("Graf po modyfikacjach");
         graph->print();
 
         pauseForUser_();
     }
 
-    // ════════════════════════════════════════════
-    //  TRYB BENCHMARKOWY
-    // ════════════════════════════════════════════
+    /**
+     * private method for running benchmark mode of the program
+     * runs tests on both graph implementations for different vertex counts and densities, collects the results, prints a summary table and exports the results to a CSV file
+     */
     void benchmarkMode_() const {
         printHeader_("TRYB BENCHMARKOWY — Bellman-Ford");
         std::cout << "Stałe gęstości: 25% | 50% | 75% | 100%\n";
@@ -170,17 +175,15 @@ private:
         std::cin >> csvPath;
 
         std::ofstream csvFile(csvPath);
-        if (!csvFile.is_open()) {
-            std::cerr << "\nBłąd: nie można otworzyć pliku " << csvPath << "\n";
-            return;
-        }
+        if (!csvFile.is_open()) { std::cerr << "\nBłąd: nie można otworzyć pliku " << csvPath << "\n"; return;}
         writeCsvHeader_(csvFile);
 
-        // Główna pętla:  |V| × gęstość × powtórzenia
+        
         const size_t      totalConfigs = vertexCounts.size() * DENSITIES.size();
         size_t            configDone   = 0;
         std::vector<BenchRow> summary;
 
+        // main test loop - iterating through vertex counts, densities and running tests for each configuration
         for (size_t V : vertexCounts) {
             for (double dens : DENSITIES) {
                 ++configDone;
@@ -189,11 +192,11 @@ private:
                           << "  |V|=" << V
                           << "  gęstość=" << static_cast<int>(dens * 100) << "%\n";
 
-                GraphGenerator gen(V, dens, gtype, minW, maxW);
+                GraphGenerator gen(V, dens, gtype, minW, maxW, true);
                 TestDriver     driver(gen, repeats);
                 auto           results = driver.runSilent();
 
-                // Agregacja dla tej konfiguracji
+                // aggregating results for summary and CSV output
                 double sumTime = 0, minT = 1e18, maxT = 0;
                 double sumEdges = 0, sumUnreach = 0;
                 for (const auto& r : results) {
@@ -221,15 +224,24 @@ private:
         std::cout << "\nWyniki zapisane do: " << csvPath << "\n";
     }
 
-    // ─────────────────────────────────────────────────────────
-    //  CSV
-    // ─────────────────────────────────────────────────────────
+    // CSV functions
+
+    /**
+     * private method for writing the header row of the benchmark results CSV file
+     * @param f the output file stream to write to
+     */
     static void writeCsvHeader_(std::ofstream& f) {
         f << "Run,GraphType,Vertices,Edges,RequestedDensity,ActualDensity,"
           << "Seed,SourceVertex,MinDist,MaxDist,AvgDist,"
           << "UnreachableVertices,NegativeCycle,TimeMs\n";
     }
 
+    /**
+     * private method for writing a single row of the benchmark results to the CSV file
+     * @param f the output file stream to write to
+     * @param r the benchmark result to write as a row in the CSV file
+     * formats the benchmark result into a CSV row, handling special cases such as unreachable vertices and negative cycles, and writes it to the provided file stream
+     */
     static void writeCsvRow_(std::ofstream& f, const TestResult& r) {
         const bool allUnreach = (r.unreachable == (int)r.vertexCount - 1);
         std::ostringstream avgSS;
@@ -248,9 +260,11 @@ private:
           << r.timeMs << "\n";
     }
 
-    // ─────────────────────────────────────────────────────────
-    //  Tabela końcowa benchmarku
-    // ─────────────────────────────────────────────────────────
+    /**
+     * Prints a summary table of the benchmark results.
+     * @param rows The benchmark results to display.
+     * @param typeName The type name of the graph being benchmarked.
+     */
     static void printBenchSummary_(const std::vector<BenchRow>& rows,
                                    const std::string& typeName) {
         printHeader_("TABELA WYNIKÓW — " + typeName);
@@ -280,9 +294,10 @@ private:
         std::cout << std::string(76, '=') << "\n";
     }
 
-    // ─────────────────────────────────────────────────────────
-    //  Wczytywanie listy liczb wierzchołków
-    // ─────────────────────────────────────────────────────────
+    /**
+     * private method for reading the vertex counts for the benchmark tests from user input
+     * prompts the user to enter vertex counts separated by spaces, validates the input and returns a vector of valid vertex counts (at least 2)
+     */
     static std::vector<size_t> readVertexCounts_() {
         std::cout << "Podaj liczby wierzchołków oddzielone spacją\n"
                   << "(np. 10 50 100 500), zatwierdź Enterem: ";
@@ -292,7 +307,7 @@ private:
         std::istringstream ss(line);
         std::vector<size_t> counts;
         size_t v;
-        while (ss >> v) if (v >= 2) counts.push_back(v);
+        while (ss >> v) {if (v >= 2) counts.push_back(v);};
         if (counts.empty()) {
             std::cout << "Brak poprawnych wartości — używam: 10 50 100\n";
             counts = {10, 50, 100};
@@ -300,9 +315,9 @@ private:
         return counts;
     }
 
-    // ─────────────────────────────────────────────────────────
-    //  Pomocnicze metody UI
-    // ─────────────────────────────────────────────────────────
+    /**
+     * private method for printing the program banner at the start of the program
+     */
     static void printBanner_() {
         std::cout
             << "\n  ╔════════════════════════════════════════╗\n"
@@ -311,6 +326,9 @@ private:
             << "  ╚════════════════════════════════════════╝\n\n";
     }
 
+    /**
+     * private method for printing the main menu of the program
+     */
     static void printMainMenu_() {
         std::cout << "\n┌─────────────────────────────────┐\n"
                   << "│          MENU GŁÓWNE             │\n"
@@ -329,6 +347,10 @@ private:
         std::cout << "\n── " << t << "\n";
     }
 
+    /**
+     * private method for choosing the graph type (adjacency list or adjacency matrix) based on user input
+     * prompts the user to choose the graph type, validates the input and returns the corresponding GraphType enum value
+     */
     static GraphType chooseGraphType_() {
         std::cout << "\nTyp implementacji:\n"
                   << "  1 - Lista sąsiedztwa\n"
@@ -338,19 +360,27 @@ private:
                : GraphType::AdjacencyMatrix;
     }
 
+    /**
+     * private method for pausing the program and waiting for the user to press Enter before returning to the main menu
+     * utility function
+     */
     static void pauseForUser_() {
         std::cout << "\nNaciśnij Enter, aby wrócić do menu...";
         std::cin.ignore(std::numeric_limits<std::streamsize>::max(), '\n');
         std::cin.get();
     }
 
+    /**
+     * template method for reading an integer value from user input with validation
+     * used in entering various parameters in the interactive and benchmark modes ex. vertex count, edge weight range, number of repeats etc.
+     */
     template<typename T>
     static T readInt_(const std::string& prompt, T lo, T hi) {
         T val;
         while (true) {
             std::cout << prompt;
-            if (!std::cin.good()) return lo;   // EOF lub błąd — wyjdź z pętli
-            if (std::cin >> val && val >= lo && val <= hi) return val;
+            if (!std::cin.good()) {return lo;}
+            if (std::cin >> val && val >= lo && val <= hi) {return val;}
             std::cout << "  Zakres: [" << lo << ", " << hi << "]\n";
             std::cin.clear();
             std::cin.ignore(std::numeric_limits<std::streamsize>::max(), '\n');
@@ -360,9 +390,9 @@ private:
     static double readDouble_(const std::string& prompt, double lo, double hi) {
         double val;
         while (true) {
-            if (!std::cin.good()) return lo;
+            if (!std::cin.good()) {return lo;}
             std::cout << prompt;
-            if (std::cin >> val && val >= lo && val <= hi) return val;
+            if (std::cin >> val && val >= lo && val <= hi) {return val;}
             std::cout << "  Zakres: [" << lo << ", " << hi << "]\n";
             std::cin.clear();
             std::cin.ignore(std::numeric_limits<std::streamsize>::max(), '\n');

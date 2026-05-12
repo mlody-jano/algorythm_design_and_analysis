@@ -14,9 +14,11 @@
 using Clock = std::chrono::high_resolution_clock;
 using Ms    = std::chrono::duration<double, std::milli>;
 
-// ─────────────────────────────────────────────────────────────
-//  Wyniki pojedynczego uruchomienia
-// ─────────────────────────────────────────────────────────────
+/**
+ * struct TestResult
+ * structure for storing the results of a single test run of the Bellman-Ford algorithm on a generated graph
+ * used in @class TestDriver for storing the results of each test run and printing them in a formatted summary and exporting them to a CSV file
+ */
 struct TestResult {
     int         runIndex;
     std::string graphType;
@@ -34,32 +36,44 @@ struct TestResult {
     double      timeMs;
 };
 
-// ─────────────────────────────────────────────────────────────
-//  TestDriver — konfiguracja, uruchamianie i eksport wyników
-// ─────────────────────────────────────────────────────────────
+/**
+ * class TestDriver
+ * class for running multiple tests of the Bellman-Ford algorithm on randomly generated graphs and collecting the results
+ * allows for running a specified number of tests, printing a summary of the results, and exporting the results to a CSV file for further analysis
+ * 
+ */
 class TestDriver {
 public:
+
+    /**
+     * Constructor for the TestDriver class
+     * @param generator The graph generator to use for creating test graphs
+     * @param runs The number of test runs to perform
+     * @param csvPath The path to the CSV file where results will be saved (optional)
+     */
     TestDriver(GraphGenerator generator,
                int            runs,
                std::string    csvPath = "")
         : gen_{std::move(generator)}
         , runs_{runs}
         , csvPath_{std::move(csvPath)}
-    {
-        if (runs_ <= 0)
-            throw std::invalid_argument("Liczba uruchomień musi być > 0");
-    }
+    { if (runs_ <= 0) { throw std::invalid_argument("Liczba uruchomień musi być > 0");}}
 
-    // ── Pełne uruchomienie z wydrukiem i zapisem CSV ──
+    /**
+     * method for running the tests and collecting the results
+     * runs the specified number of tests, collects the results in a vector of TestResult structures, saves the results to a CSV file if a path was provided, and prints a summary of the results to the console
+     */
     void run() {
         results_ = collectResults_();
-        if (!csvPath_.empty()) saveCsv_();
+        if (!csvPath_.empty()) { saveCsv_();}
         printSummary_();
-        if (!csvPath_.empty())
-            std::cout << "\nWyniki zapisane do: " << csvPath_ << "\n";
+        if (!csvPath_.empty()) {std::cout << "\nWyniki zapisane do: " << csvPath_ << "\n";}
     }
 
-    // ── Ciche uruchomienie — tylko zwraca wyniki ──────
+    /**
+     * method for running the tests silently and returning the results
+     * runs the specified number of tests, collects the results in a vector of TestResult structures, and returns the vector without saving to a CSV file or printing a summary
+     */
     std::vector<TestResult> runSilent() {
         results_ = collectResults_();
         return results_;
@@ -74,7 +88,10 @@ private:
     std::string             csvPath_;
     std::vector<TestResult> results_;
 
-    // ── Zbieranie wyników ────────────────────────
+    /**
+     * method for collecting the results of all test runs
+     * runs the specified number of tests and collects the results in a vector of TestResult structures
+     */
     std::vector<TestResult> collectResults_() {
         std::vector<TestResult> out;
         out.reserve(runs_);
@@ -86,7 +103,11 @@ private:
         return out;
     }
 
-    // ── Pojedynczy test ──────────────────────────
+    /**
+     * method for running a single test
+     * @param index The index of the test run
+     * @return The result of the test run
+     */
     TestResult runSingle_(int index) {
         unsigned seed = static_cast<unsigned>(
             Clock::now().time_since_epoch().count()
@@ -112,7 +133,7 @@ private:
         int reachable = 0, unreachable = 0;
 
         for (const auto& v : graph->vertices()) {
-            if (v->getID() == source) continue;
+            if (v->getID() == source) { continue;}
             if (bf.reachable(v->getID())) {
                 int d = bf.dist.at(v->getID());
                 minD = std::min(minD, d);
@@ -132,21 +153,33 @@ private:
         };
     }
 
-    // ── Zapis CSV ────────────────────────────────
+    /**
+     * method for saving the results to a CSV file
+     * @param file The output file stream
+     */
     void saveCsv_() const {
         std::ofstream file(csvPath_);
-        if (!file.is_open())
-            throw std::runtime_error("Nie można otworzyć: " + csvPath_);
+        if (!file.is_open()) { throw std::runtime_error("Nie można otworzyć: " + csvPath_);}
         writeHeader_(file);
-        for (const auto& r : results_) writeRow_(file, r);
+        for (const auto& r : results_) {writeRow_(file, r);};
     }
 
+    /**
+     * private method for writing the header row of the CSV file
+     * @param f the output file stream to write to
+     */
     static void writeHeader_(std::ofstream& f) {
         f << "Run,GraphType,Vertices,Edges,RequestedDensity,ActualDensity,"
           << "Seed,SourceVertex,MinDist,MaxDist,AvgDist,"
           << "UnreachableVertices,NegativeCycle,TimeMs\n";
     }
 
+    /**
+     * private method for writing a single row of the benchmark results to the CSV file
+     * @param f the output file stream to write to
+     * @param r the benchmark result to write as a row in the CSV file
+     * formats the benchmark result into a CSV row, handling special cases such as unreachable vertices and negative cycles, and writes it to the provided file stream
+     */
     static void writeRow_(std::ofstream& f, const TestResult& r) {
         const bool allUnreach = (r.unreachable == (int)r.vertexCount - 1);
         f << std::fixed << std::setprecision(4)
@@ -164,16 +197,23 @@ private:
           << r.timeMs << "\n";
     }
 
-    // ── Pasek postępu ────────────────────────────
+    /**
+     * private method for printing the progress of the test runs in the console
+     * @param cur the current test run index
+     * utility function for providing feedback to the user about the progress of the test runs
+     */
     void printProgress_(int cur) const {
         const int W = 25;
         int filled  = static_cast<int>(static_cast<float>(cur) / runs_ * W);
         std::cout << "\r  [";
-        for (int i = 0; i < W; ++i) std::cout << (i < filled ? '#' : '-');
+        for (int i = 0; i < W; ++i) {std::cout << (i < filled ? '#' : '-');}
         std::cout << "] " << cur << "/" << runs_ << std::flush;
     }
 
-    // ── Podsumowanie w konsoli ───────────────────
+    /**
+     * private method for printing a summary of the test results to the console
+     * formats the results in a table with columns for each relevant metric and prints it to the console
+     */
     void printSummary_() const {
         std::cout << "\n" << std::string(84, '=') << "\n"
                   << "  PODSUMOWANIE\n"

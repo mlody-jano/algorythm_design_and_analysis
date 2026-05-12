@@ -124,18 +124,13 @@ public:
      */
     std::vector<EdgePtr> edges() const override {
         std::vector<EdgePtr> result;
-        for (const auto& [_, edge] : edgeMap) result.push_back(edge);
+        for (const auto& [_, edge] : edgeMap) {result.push_back(edge);}
         return result;
     }
 
-    size_t edgeCount() const override {
-        size_t count = 0;
-        for (const auto& [_, edge] : edgeMap)
-            count += 1;
-        return directed ? count : count / 2;
-    }
+    size_t edgeCount() const override { return edgeMap.size();}
 
-    void forEachEdge(const typename Graph<V,E>::EdgeVisitor&) const;
+    void forEachEdge(const typename Graph<V,E>::EdgeVisitor&) const override;
     
     // utilities
 
@@ -147,14 +142,19 @@ public:
      */
     std::vector<VertexPtr> neighbors(VertexID vID) const override {
         std::vector<VertexPtr> result;
-        for (const auto& edge : this->getVertex(vID)->incidentEdges())
-            if (auto neigh = edge->opposite(vID)) {result.push_back(this->getVertex(*neigh));}
+        auto vertex = this->getVertex(vID);
+        const auto& edgeList = directed ? vertex->outEdges()
+                                        : vertex->incidentEdges();
+        for (const auto& edge : edgeList)
+            if (auto neigh = edge->opposite(vID)) { result.push_back(this->getVertex(*neigh)); }
         return result;
     }
 
     void print() const override;
 
     size_t degree(VertexID) const override;
+
+    bool isDirected() const override { return directed;}
 
 private:
     std::unordered_map<VertexID, VertexPtr> vertexMap;          // mapping VertexID to Vertex object pointers

@@ -6,16 +6,15 @@
 #include <vector>
 #include <stdexcept>
 
-// ─────────────────────────────────────────────────────────────
-//  Wynik algorytmu Bellmana-Forda
-// ─────────────────────────────────────────────────────────────
+/**
+ * struct BFResult
+ * structure for storing the result of Bellman-Ford algorithm
+ */
 struct BFResult {
-    // dist[v]  = najkrótsza odległość od źródła do v
-    //            MAX jeśli wierzchołek nieosiągalny
+    // dist[v]  => shortest distance from source to v; INF if unreachable
     std::unordered_map<VertexID, int>      dist;
 
-    // prev[v]  = poprzednik v na najkrótszej ścieżce
-    //            SIZE_MAX jeśli brak poprzednika
+    // prev[v]  => previous vertex on the shortest path from source to v; NO_PREV if unreachable or v is source
     std::unordered_map<VertexID, VertexID> prev;
 
     bool hasNegativeCycle = false;
@@ -28,7 +27,7 @@ struct BFResult {
         return it != dist.end() && it->second < INF;
     }
 
-    // Odtworz ścieżkę od źródła do v
+    // Reconstructs the shortest path from source to v as a vector of vertex IDs
     std::vector<VertexID> pathTo(VertexID v) const {
         if (!reachable(v)) return {};
         std::vector<VertexID> path;
@@ -39,20 +38,20 @@ struct BFResult {
     }
 };
 
-// ─────────────────────────────────────────────────────────────
-//  Algorytm Bellmana-Forda
-//
-//  Dla grafu nieskierowanego każda krawędź (u,v,w) jest
-//  traktowana jako dwie krawędzie skierowane: u→v i v→u.
-//  Złożoność: O(V · E)
-// ─────────────────────────────────────────────────────────────
+/**
+ * function bellmanFord
+ * implementation of Bellman-Ford algorithm for finding the shortest paths from a source vertex to all other vertices in a graph
+ * @param g graph to run the algorithm on, @param source ID of the source vertex
+ * @return BFResult structure containing the distances, previous vertices, and negative cycle flag
+ * throws VertexNotFoundException if the source vertex is not found in the graph
+ */
 template <typename V>
 BFResult bellmanFord(const Graph<V, int>& g, VertexID source) {
     if (!g.hasVertex(source)) {throw VertexNotFoundException(source);}
 
     BFResult result;
-    const int      INF     = BFResult::INF;
-    const VertexID NO_PREV = BFResult::NO_PREV;
+    const int      INF      = BFResult::INF;
+    const VertexID NO_PREV  = BFResult::NO_PREV;
 
     // Inicjalizacja — wszystkie odległości = INF, źródło = 0
     for (const auto& v : g.vertices()) {
@@ -61,54 +60,40 @@ BFResult bellmanFord(const Graph<V, int>& g, VertexID source) {
     }
     result.dist[source] = 0;
 
-    const size_t numV       = g.vertexCount();
-    auto         allEdges = g.edges();
+    const size_t numV      = g.vertexCount();
+    const bool   directed  = g.isDirected();
 
-    // Główna pętla: V-1 relaksacji
+    // main loop -> iterating |V|-1 times, relaxing all edges
     for (size_t iter = 0; iter < numV - 1; ++iter) {
         bool updated = false;
 
-        for (const auto& edge : allEdges) {
-            VertexID u = edge->getFrom();
-            VertexID v = edge->getTo();
-            int      w = edge->getWeight();
-
-            // Relaksacja u → v
+        g.forEachEdge([&](VertexID u, VertexID v, int w) {
             if (result.dist[u] < INF &&
-                result.dist[u] + w < result.dist[v])
+                result.dist[u] + w < result.dist[v]) // if the path through u is shorter than the previously known path to v -> update
             {
                 result.dist[v] = result.dist[u] + w;
                 result.prev[v] = u;
                 updated = true;
             }
-
-            // Relaksacja v → u (graf nieskierowany)
-            if (result.dist[v] < INF &&
-                result.dist[v] + w < result.dist[u])
+            if (!directed &&
+                result.dist[v] < INF &&
+                result.dist[v] + w < result.dist[u]) // if the path through v is shorter than the previously known path to u -> update (for undirected graphs)
             {
                 result.dist[u] = result.dist[v] + w;
                 result.prev[u] = v;
                 updated = true;
             }
-        }
+        });
 
-        // Wczesne zakończenie gdy brak poprawy
-        if (!updated) break;
+        if (!updated) break;                        // early stop if no updates were made
     }
 
-    // Detekcja ujemnych cykli — dodatkowa relaksacja
-    for (const auto& edge : allEdges) {
-        VertexID u = edge->getFrom();
-        VertexID v = edge->getTo();
-        int      w = edge->getWeight();
-
+    // negative cycle detection
+    g.forEachEdge([&](VertexID u, VertexID v, int w) {
+        if (result.hasNegativeCycle) { return;}
         if ((result.dist[u] < INF && result.dist[u] + w < result.dist[v]) ||
-            (result.dist[v] < INF && result.dist[v] + w < result.dist[u]))
-        {
-            result.hasNegativeCycle = true;
-            break;
-        }
-    }
+            (!directed && result.dist[v] < INF && result.dist[v] + w < result.dist[u])) { result.hasNegativeCycle = true;} // if we can still relax an edge after |V|-1 iterations, then there is a negative cycle in the graph
+    });
 
     return result;
 }

@@ -3,46 +3,82 @@ import matplotlib.pyplot as plt
 from pathlib import Path
 
 # ============================================================
-# KONFIGURACJA
+# PLIKI CSV
 # ============================================================
 
-# Pliki CSV dla dwóch implementacji grafu
-CSV_LIST = "results_adj_list.csv"
-CSV_MATRIX = "results_adj_matrix.csv"
+CSV_LIST = "results_list_76.csv"
+CSV_MATRIX = "results_mtx_76.csv"
 
-# Nazwy implementacji wyświetlane na wykresach
-IMPLEMENTATION_NAMES = {
-    "list": "Adjacency List",
-    "matrix": "Adjacency Matrix"
-}
-
-# Folder wyjściowy
 OUTPUT_DIR = Path("plots")
 OUTPUT_DIR.mkdir(exist_ok=True)
 
 # ============================================================
-# WCZYTYWANIE DANYCH
+# WCZYTYWANIE
 # ============================================================
 
 df_list = pd.read_csv(CSV_LIST)
 df_matrix = pd.read_csv(CSV_MATRIX)
 
-# Dodanie kolumny identyfikującej implementację
-df_list["Implementation"] = IMPLEMENTATION_NAMES["list"]
-df_matrix["Implementation"] = IMPLEMENTATION_NAMES["matrix"]
+print("Kolumny LIST:")
+print(df_list.columns)
 
-# Połączenie danych
+print("\nKolumny MATRIX:")
+print(df_matrix.columns)
+
+# ============================================================
+# DODANIE IMPLEMENTACJI
+# ============================================================
+
+df_list["Implementation"] = "Adjacency List"
+df_matrix["Implementation"] = "Adjacency Matrix"
+
 df = pd.concat([df_list, df_matrix], ignore_index=True)
 
 # ============================================================
-# FILTROWANIE — tylko Bellman-Ford
+# JEŚLI NIE MA KOLUMNY RequestedDensity
 # ============================================================
 
-# Dostosuj nazwę algorytmu jeśli w CSV masz inną
-df = df[df["Algorithm"].str.contains("Bellman", case=False)]
+if "RequestedDensity" not in df.columns:
+
+    if "Density" in df.columns:
+        df["RequestedDensity"] = df["Density"]
+    else:
+        raise Exception(
+            "Brakuje kolumny RequestedDensity lub Density"
+        )
 
 # ============================================================
-# UŚREDNIANIE WYNIKÓW
+# JEŚLI NIE MA KOLUMNY Vertices
+# ============================================================
+
+if "Vertices" not in df.columns:
+    raise Exception("Brakuje kolumny Vertices")
+
+# ============================================================
+# JEŚLI NIE MA KOLUMNY TimeMs
+# ============================================================
+
+if "TimeMs" not in df.columns:
+
+    possible_names = [
+        "Time",
+        "ExecutionTime",
+        "ExecutionTimeMs"
+    ]
+
+    found = False
+
+    for name in possible_names:
+        if name in df.columns:
+            df["TimeMs"] = df[name]
+            found = True
+            break
+
+    if not found:
+        raise Exception("Brakuje kolumny z czasem wykonania")
+
+# ============================================================
+# ŚREDNIE WYNIKI
 # ============================================================
 
 grouped = (
@@ -58,9 +94,7 @@ grouped = (
 )
 
 # ============================================================
-# 1. DWA WYKRESY:
-#    jeden wykres = jedna implementacja
-#    4 linie = 4 gęstości
+# WYKRESY IMPLEMENTACJI
 # ============================================================
 
 implementations = grouped["Implementation"].unique()
@@ -71,7 +105,9 @@ for impl in implementations:
 
     impl_df = grouped[grouped["Implementation"] == impl]
 
-    densities = sorted(impl_df["RequestedDensity"].unique())
+    densities = sorted(
+        impl_df["RequestedDensity"].unique()
+    )
 
     for density in densities:
 
@@ -92,25 +128,21 @@ for impl in implementations:
     plt.grid(True)
     plt.legend()
 
-    plt.tight_layout()
-
     filename = (
         OUTPUT_DIR /
-        f"bellman_ford_{impl.replace(' ', '_').lower()}.png"
+        f"{impl.replace(' ', '_').lower()}.png"
     )
 
     plt.savefig(filename)
     plt.close()
 
-    print(f"Zapisano: {filename}")
-
 # ============================================================
-# 2. CZTERY WYKRESY:
-#    jeden wykres = jedna gęstość
-#    2 linie = 2 implementacje
+# WYKRESY GĘSTOŚCI
 # ============================================================
 
-densities = sorted(grouped["RequestedDensity"].unique())
+densities = sorted(
+    grouped["RequestedDensity"].unique()
+)
 
 for density in densities:
 
@@ -139,20 +171,12 @@ for density in densities:
     plt.grid(True)
     plt.legend()
 
-    plt.tight_layout()
-
     filename = (
         OUTPUT_DIR /
-        f"bellman_ford_density_{density}.png"
+        f"density_{density}.png"
     )
 
     plt.savefig(filename)
     plt.close()
 
-    print(f"Zapisano: {filename}")
-
-# ============================================================
-# GOTOWE
-# ============================================================
-
-print("\nWszystkie wykresy zostały wygenerowane.")
+print("\nWykresy wygenerowane.")

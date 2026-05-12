@@ -40,6 +40,7 @@ public:
     virtual void                    print()                             const = 0;
 
     virtual size_t                  degree(VertexID)                    const = 0;
+    virtual bool                    isDirected()                        const = 0;
 
 
 };
