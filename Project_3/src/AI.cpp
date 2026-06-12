@@ -1,5 +1,8 @@
 #include "AI.h"
 #include <limits>
+#include <chrono>
+#include <iostream>
+#include <iomanip>
 #include <algorithm>
 
 
@@ -84,7 +87,8 @@ int AI::evaluate(const Board& board) {
  * @param maximising represents whether we are currently maximizing or minimizing player
  * the function returns the best score that the current player can achieve from the given board state, assuming that the opponent also plays optimally
  */
-int AI::minimax(Board& board, int depth, int maxDepth, int alpha, int beta, bool maximising) {
+int AI::minimax(Board& board, int depth, int maxDepth, int alpha, int beta, bool maximising, long long& nodesVisited) {
+    ++nodesVisited;
     GameState state = board.checkGameState();
 
     // Terminal: win/loss scored relative to remaining depth (prefer faster wins)
@@ -101,7 +105,7 @@ int AI::minimax(Board& board, int depth, int maxDepth, int alpha, int beta, bool
         int best = -INF;
         for (auto& m : moves) {
             board.makeMove(m.row, m.col, Cell::O);
-            int score = minimax(board, depth + 1, maxDepth, alpha, beta, false);
+            int score = minimax(board, depth + 1, maxDepth, alpha, beta, false, nodesVisited);
             board.undoMove(m.row, m.col);
             best  = std::max(best, score);
             alpha = std::max(alpha, best);
@@ -112,7 +116,7 @@ int AI::minimax(Board& board, int depth, int maxDepth, int alpha, int beta, bool
         int best = INF;
         for (auto& m : moves) {
             board.makeMove(m.row, m.col, Cell::X);
-            int score = minimax(board, depth + 1, maxDepth, alpha, beta, true);
+            int score = minimax(board, depth + 1, maxDepth, alpha, beta, true, nodesVisited);
             board.undoMove(m.row, m.col);
             best = std::min(best, score);
             beta = std::min(beta, best);
@@ -128,17 +132,39 @@ int AI::minimax(Board& board, int depth, int maxDepth, int alpha, int beta, bool
  * the move with the highest score is returned at the end
  */
 Move AI::getBestMove(Board& board, int maxDepth) {
-    int bestScore = -INF;
-    Move bestMove{-1, -1};
-
+    int       bestScore    = -INF;
+    Move      bestMove{-1, -1};
+    long long nodesVisited{0};
+ 
+    /** begin timer for time measurement of minmax algorithm */
+    auto startTime = std::chrono::high_resolution_clock::now();
+ 
     for (auto& m : board.getLegalMoves()) {
         board.makeMove(m.row, m.col, Cell::O);
-        int score = minimax(board, 1, maxDepth, -INF, INF, false);
+        int score = minimax(board, 1, maxDepth, -INF, INF, false, nodesVisited);
         board.undoMove(m.row, m.col);
-        if (score > bestScore) {
-            bestScore = score;
-            bestMove  = m;
-        }
+        if (score > bestScore) { bestScore = score; bestMove  = m; }
     }
+ 
+    /** end timer and calculate time in ms */
+    auto    endTime  = std::chrono::high_resolution_clock::now();
+    auto    elapsedUs = std::chrono::duration_cast<std::chrono::microseconds>(endTime - startTime).count();
+    double  elapsedMs = elapsedUs / 1000.0;
+ 
+    // nodes per second (avoid division by zero for instant moves)
+    double  nodesPerSec = (elapsedUs > 0) ? (static_cast<double>(nodesVisited) / elapsedUs) * 1'000'000.0 : 0.0;
+ 
+    /** print AI move statistics */
+    std::cout << "┌─ AI move statistics ────────────────────┐\n";
+    std::cout << "│  Best move   : ["
+              << bestMove.row << ", " << bestMove.col << "]\n";
+    std::cout << "│  Search time : "
+              << std::fixed << std::setprecision(3) << elapsedMs << " ms\n";
+    std::cout << "│  Nodes visited: "
+              << nodesVisited << "\n";
+    std::cout << "│  Throughput  : "
+              << std::fixed << std::setprecision(0) << nodesPerSec << " nodes/s\n";
+    std::cout << "└─────────────────────────────────────────┘\n";
+ 
     return bestMove;
 }

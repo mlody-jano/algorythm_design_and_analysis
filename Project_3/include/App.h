@@ -8,4 +8,5 @@ class App {
 public:
     void        run();
     int         promptBoardSize();
+    int         promptDepthSearch(int);
 };

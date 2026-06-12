@@ -228,25 +228,25 @@ void Renderer::drawStatusBar(const Game& game, bool aiThinking) {
     switch (game.getGameState()) {
         case GameState::Playing:
             if (aiThinking) {
-                msg = "Komputer mysli...";
+                msg = "Computer is thinking...";
                 col = DIM_COL;
             } else if (game.getTurn() == Turn::Player) {
-                msg = "Twoj ruch  (X)";
+                msg = "Your move  (X)";
             } else {
-                msg = "Ruch komputera  (O)";
+                msg = "Computer move  (O)";
                 col = DIM_COL;
             }
             break;
         case GameState::XWins:
-            msg = "Wygrales!";
+            msg = "You won!";
             col = X_COL;
             break;
         case GameState::OWins:
-            msg = "Komputer wygrał.";
+            msg = "Computer won.";
             col = O_COL;
             break;
         case GameState::Draw:
-            msg = "Remis.";
+            msg = "Draw.";
             col = DIM_COL;
             break;
     }
@@ -259,7 +259,7 @@ void Renderer::drawStatusBar(const Game& game, bool aiThinking) {
     statusText.setPosition({winW / 2.f, winH - STATUS_H / 2.f});
     window_.draw(statusText);
 
-    sf::Text hint(font_, "R - nowa gra", 14);
+    sf::Text hint(font_, "R - new game", 14);
     hint.setFillColor(DIM_COL);
     sf::FloatRect hb = hint.getLocalBounds();
     hint.setOrigin({hb.position.x + hb.size.x, hb.position.y + hb.size.y});

@@ -14,7 +14,7 @@ enum class Turn { Player, AI };
  */
 class Game {
 public:
-    explicit                Game(int);
+    explicit                Game(int, int);
 
     bool                    playerMove(int, int);
     Move                    aiMove();
@@ -22,12 +22,13 @@ public:
     GameState               getGameState()          const { return board_.checkGameState(); }
     const Board&            getBoard()              const { return board_; }
     int                     getBoardSize()          const { return board_.getSize(); }
-    void                    reset(int);
+    void                    reset(int, int);
+
+    static int              defaultDepthForSize(int);
 
 private:
     Board board_;
     Turn  turn_;
     int   maxDepth_;
 
-    static int              depthForSize(int);
 };

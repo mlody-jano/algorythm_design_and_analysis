@@ -1,6 +1,7 @@
 #include "../include/App.h"
 #include <iostream>
 #include <SFML/Graphics.hpp>
+#include <cmath>
 #include <string>
 #include <thread>
 #include <atomic>
@@ -18,18 +19,35 @@ int App::promptBoardSize() {
     int n{0};
     while (true) {
         std::cout << "╔══════════════════════════════╗\n";
-        std::cout << "║    KOLKO I KRZYZYK  -  AI    ║\n";
+        std::cout << "║       Tic Tac Toe  -  AI     ║\n";
         std::cout << "╚══════════════════════════════╝\n";
-        std::cout << "Podaj rozmiar planszy (3-10): ";
+        std::cout << "Enter board size (3-10): ";
         std::string line;
         std::getline(std::cin, line);
         try {
             n = std::stoi(line);
             if (n >= 3 && n <= 10) break;
         } catch (...) {}
-        std::cout << "Nieprawidlowy rozmiar. Wpisz liczbe calkowita od 3 do 10.\n\n";
+        std::cout << "Invalid size. Please enter a valid size in range <3, 10> .\n\n";
     }
     return n;
+}
+
+int App::promptDepthSearch(int boardSize) {
+    int depth{0};
+    int max = pow(boardSize, 2);
+    while (true) {
+        std::cout << "Enter search depth(press enter for default values): ";
+        std::string line;
+        std::getline(std::cin, line);
+        if(line.empty()) { return -1; }
+        try {
+            depth = std::stoi(line);
+            if (depth <= max) { break; }
+        } catch (...) {}
+        std::cout << "Invalid size. Please provide a valid number lower than max (n^2, n being size of board).\n\n";
+    }
+    return depth;
 }
 
 /**
@@ -43,7 +61,8 @@ void App::run() {
         system("chcp 65001 > nul");
     #endif
 
-    int boardSize = promptBoardSize();
+    int boardSize   = promptBoardSize();
+    int depth       = promptDepthSearch(boardSize);
 
     /** define window dimensions */
     const int MIN_WIN  = 420;
@@ -70,7 +89,7 @@ void App::run() {
 
     /** create game and renderer instances */
 
-    Game                game(boardSize);
+    Game                game(boardSize, depth);
     Renderer            renderer(window, font);
 
     /** create AI and game mutex for synchronization */
@@ -112,10 +131,11 @@ void App::run() {
             if (const auto* kp = event->getIf<sf::Event::KeyPressed>()) {
                 // SFML 3: sf::Keyboard::Key::R
                 if (kp->code == sf::Keyboard::Key::R && !aiRunning) {
-                    int newSize = promptBoardSize();
+                    int newSize     = promptBoardSize();
+                    int newDepth    = promptDepthSearch(newSize);
                     {
                         std::lock_guard<std::mutex> lk(gameMutex);
-                        game.reset(newSize);
+                        game.reset(newSize, newDepth);
                         int newPx = windowPx(newSize);
                         window.setSize({ static_cast<unsigned>(newPx), static_cast<unsigned>(newPx + STATUS_H) });
                         // SFML 3: sf::View takes sf::FloatRect with position+size

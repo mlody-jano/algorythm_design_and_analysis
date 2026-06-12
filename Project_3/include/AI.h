@@ -13,5 +13,5 @@ private:
     static int  evaluate(const Board&);
     static int  scoreLine(int, int);
 
-    static int  minimax(Board&, int, int, int, int, bool);
+    static int  minimax(Board&, int, int, int, int, bool, long long&);
 };
