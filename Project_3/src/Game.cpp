@@ -1,4 +1,4 @@
-#include "Game.h"
+#include "../include/Game.h"
 
 /**
  * private static method of @class Game to determine the depth of minimax search based on board size
@@ -19,7 +19,7 @@ int Game::defaultDepthForSize(int n) {
  * parametrized constructor of @class Game
  * initializes the board with given size, sets the first turn to player and determines the maximum depth of minimax search
  */
-Game::Game(int boardSize, int maxDepth) : board_(boardSize), turn_(Turn::Player), maxDepth_(maxDepth_ < 1 ? defaultDepthForSize(boardSize) : maxDepth) {}
+Game::Game(int boardSize, int maxDepth) : board_(boardSize), turn_(Turn::Player), maxDepth_(maxDepth < 1 ? defaultDepthForSize(boardSize) : maxDepth) {}
 
 /**
  * public method of @class Game to reset the game state

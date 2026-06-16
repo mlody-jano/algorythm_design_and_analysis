@@ -1,4 +1,4 @@
-#include "Board.h"
+#include "../include/Board.h"
 
 /**
  * parametrized constructor of @class Board

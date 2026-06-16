@@ -1,4 +1,4 @@
-#include "App.h"
+#include "../include/App.h"
 
 /**
  * main program entry point

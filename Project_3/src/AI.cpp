@@ -1,4 +1,4 @@
-#include "AI.h"
+#include "../include/AI.h"
 #include <limits>
 #include <chrono>
 #include <iostream>
