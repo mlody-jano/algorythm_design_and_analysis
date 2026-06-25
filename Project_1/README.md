@@ -14,10 +14,6 @@ The following sorting algorithms are implemented:
 * A C++ compiler that supports the **C++17** standard (e.g., GCC, Clang, MSVC).
 * **CMake** (version 3.10 or higher).
 
-## Project report
-
-<a href="https://github.com/mlody-jano/algorythm_design_and_analysis/blob/68fdb7b89a71d2e601edbca7e2e2288136235d5c/Project_1/PiAA_Project1.pdf" target="_blank">📄 Report</a>
-
 ## How to Build
 
 This project uses CMake for an out-of-source build. Follow these steps to compile the code:
