@@ -16,7 +16,7 @@ The following sorting algorithms are implemented:
 
 ## Project report
 
-<a href="https://raw.githubusercontent.com/mlody-jano/algorythm_design_and_analysis/Project_1/PiAA_Project1.pdf" target="_blank">📄 Report</a>
+<a href="https://github.com/mlody-jano/algorythm_design_and_analysis/blob/68fdb7b89a71d2e601edbca7e2e2288136235d5c/Project_1/PiAA_Project1.pdf" target="_blank">📄 Report</a>
 
 ## How to Build
 
