@@ -1,93 +1,28 @@
-# Kółko i Krzyżyk – C++ / SFML / Minimax α-β
+# Tic-Tac-Toe — `minimax()` with Alpha-Beta Pruning
 
-## Wymagania
+## About
+This project contains an implementation of a **Tic-Tac-Toe game** in C++ with a computer-controlled AI opponent. The program enables users to choose between two modes of running:
+* **Interactive game** - Used to play against the AI player in a user-friendly graphical interface built with SFML
 
-| Narzędzie | Wersja |
-|-----------|--------|
-| CMake     | ≥ 3.16 |
-| Kompilator | GCC 9 / Clang 10 / MSVC 2019 (C++17) |
-| SFML      | 2.6.x  |
+The AI opponent is powered by the `minimax()` algorithm with **alpha-beta pruning**, which significantly reduces the number of nodes evaluated in the game tree. Users can specify:
+* **Board size** - defines the dimensions of the game board
+* **Search depth** - controls how many moves ahead the AI looks, allowing tweaks in difficulty and performance
 
-### Instalacja SFML
+## Prerequisites
+* A C++ compiler that supports the **C++17** standard (e.g., GCC, Clang, MSVC).
+* **CMake** (version 3.10 or higher).
+* **SFML** (version 3.x) — used for graphical rendering of the game board.
 
-**Ubuntu / Debian**
-```bash
-sudo apt install libsfml-dev
-```
+## How to Build
 
-**macOS (Homebrew)**
-```bash
-brew install sfml
-```
+This project uses CMake for an out-of-source build. Follow these steps to compile the code:
 
-**Windows (vcpkg)**
-```powershell
-vcpkg install sfml:x64-windows
-```
-
----
-
-## Budowanie
-
-```bash
-mkdir build && cd build
-cmake ..
-cmake --build . --config Release
-```
-
-Executable pojawi się w katalogu `build/` (lub `build/Release/` na Windows).
-
----
-
-## Uruchamianie
-
-```bash
-./TicTacToe
-```
-
-Na starcie program zapyta o rozmiar planszy (3–10).  
-Po zakończeniu gry naciśnij **R** aby zrestartować i wybrać nowy rozmiar.
-
----
-
-## Sterowanie
-
-| Akcja | Sterowanie |
-|-------|-----------|
-| Ruch gracza | kliknięcie lewym przyciskiem myszy |
-| Nowa gra / zmiana rozmiaru | klawisz `R` |
-| Zamknięcie okna | `×` lub `Alt+F4` |
-
----
-
-## Architektura
-
-```
-Board      – stan planszy, legalne ruchy, wykrywanie wygranej
-AI         – minimax z cięciami α-β + heurystyka dla dużych plansz
-Game       – zarządzanie turami, interfejs dla logiki
-Renderer   – renderowanie SFML (siatka, X, O, linia wygranej, pasek statusu)
-main       – pętla zdarzeń, wątek AI, prompt rozmiaru planszy
-```
-
-### Limity głębokości minimax
-
-| Rozmiar | maxDepth |
-|---------|----------|
-| 3       | pełne przeszukanie (9) |
-| 4       | 5 |
-| 5       | 4 |
-| 6+      | 3 |
-
-### Heurystyka (dla węzłów na głębokości granicznej)
-
-Każda linia (rząd, kolumna, przekątna) oceniana jest jako ±10^k:
-- `k` = liczba symboli AI/gracza w linii
-- linia mieszana (oba symbole) = 0 (zablokowana)
-
----
-
-## Czcionka
-
-Umieść plik `font.ttf` w katalogu `assets/`.  
-Program automatycznie próbuje też systemowych czcionek (DejaVu, Helvetica, Arial).
+1. **Clone the repository** and navigate to the project directory:
+   ```bash
+   cd algorythm_design_and_analysis/project3
+   mkdir build
+   cd build
+   cmake ..
+   cmake --build .
+   ./project3
+   ```
